@@ -1,0 +1,112 @@
+:root { 
+ --primary-glow: #6a11cb; 
+ --secondary-glow: #2575fc; 
+ --accent-color: #ff5722; 
+ --text-color: #f0f0f0; 
+ --card-background: rgba(22, 22, 22, 0.6); 
+ --card-border: rgba(255, 255, 255, 0.1); 
+ --shadow-color: rgba(0, 0, 0, 0.3); 
+} 
+
+body { 
+ margin: 0; 
+ font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; 
+ line-height: 1.6; 
+ font-weight: 400; 
+color: var(--text-color);
+background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+background-size: 400% 400%;
+animation: gradient 15s ease infinite;
+font-synthesis: none; 
+ text-rendering: optimizeLegibility; 
+ -webkit-font-smoothing: antialiased; 
+ -moz-osx-font-smoothing: grayscale; 
+} 
+
+@keyframes gradient { 
+ 0% { 
+ background-position: 0% 50%; 
+ } 
+ 50% { 
+ background-position: 100% 50%; 
+ } 
+ 100% { 
+ background-position: 0% 50%; 
+ } 
+} 
+
+#root { 
+ max-width: 1280px; 
+ margin: 0 auto; 
+ padding: 2rem; 
+ text-align: center; 
+} 
+
+.logo { 
+ height: 6em; 
+ padding: 1.5em; 
+ will-change: filter; 
+ transition: all 0.3s ease-in-out; 
+ filter: drop-shadow(0 0 1em rgba(0,0,0,0.4)); 
+} 
+
+.logo:hover { 
+ filter: drop-shadow(0 0 2.5em var(--primary-glow)); 
+ transform: scale(1.1); 
+} 
+
+.logo.react:hover { 
+ filter: drop-shadow(0 0 2.5em var(--secondary-glow)); 
+ transform: scale(1.1); 
+} 
+
+@keyframes logo-spin { 
+ from { 
+ transform: rotate(0deg); 
+ } 
+ to { 
+ transform: rotate(360deg); 
+ } 
+} 
+
+@media (prefers-reduced-motion: no-preference) { 
+ a:nth-of-type(2) .logo { 
+ animation: logo-spin infinite 20s linear; 
+ } 
+} 
+
+.card { 
+ padding: 2.5em; 
+ background-color: var(--card-background); 
+ border-radius: 20px; 
+ box-shadow: 0 15px 30px var(--shadow-color); 
+ backdrop-filter: blur(12px); 
+ -webkit-backdrop-filter: blur(12px); 
+ border: 1px solid var(--card-border); 
+ transition: all 0.3s ease; 
+} 
+
+.card:hover { 
+ transform: translateY(-10px); 
+ box-shadow: 0 25px 40px var(--shadow-color); 
+} 
+
+.read-the-docs { 
+ color: var(--accent-color); 
+ font-weight: 500; 
+ text-decoration: none; 
+ transition: color 0.3s; 
+} 
+
+.read-the-docs:hover { 
+ color: #ff8a65; 
+} 
+
+/* ### Key Professional Enhancements: 
+
+* **Animated Gradient Background**: The static background has been replaced with a vibrant, smoothly animating gradient. [1, 9] This modern technique adds a dynamic and captivating feel to the entire page. 
+* **Vibrant & Professional Color Palette**: The color scheme has been updated to a more professional and eye-catching combination. It utilizes a deep purple and a vivid blue for glowing effects, with a bright orange as an accent for key elements. [21, 26] 
+* **Enhanced Card Design**: The card now features a more refined "frosted glass" effect with increased padding and a more pronounced shadow. A subtle hover effect has been added to lift the card, creating a sense of depth and interactivity. [12, 18, 29] 
+* **Engaging Logo Interactivity**: The hover effects on the logos are now more pronounced, with a larger glow and a subtle scaling animation to make them more engaging for the user. 
+* **Improved Typography**: A more modern and readable font stack has been implemented to enhance the overall professional appearance. 
+* **Refined Transitions**: All transitions have been fine-tuned with `ease-in-out` and `ease` timing functions for a smoother and more natural feel. [8] */
