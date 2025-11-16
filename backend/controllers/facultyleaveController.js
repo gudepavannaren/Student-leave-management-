@@ -1,52 +1,62 @@
-const LeaveApplication = require('../models/LeaveApplication');
+// facultyleaveController.js
+const LeaveApplication = require('./LeaveApplication'); // model path
 
-// Get all leaves for faculty
-const getAllLeavesForFaculty = async (req, res) => {
+// GET /api/faculty/all
+exports.getAllLeavesForFaculty = async (req, res) => {
   try {
-    const leaves = await LeaveApplication.find({ mode: 'faculty+rector' })
-      .populate('studentId', 'name email'); // Include student info
-    res.json(leaves);
+    // Filter depending on faculty responsibilities, or return all
+    const leaves = await LeaveApplication.find().sort({ createdAt: -1 }).lean();
+    return res.status(200).json(leaves);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in getAllLeavesForFaculty:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get pending leaves for faculty
-const getPendingLeavesForFaculty = async (req, res) => {
+// GET /api/faculty/pending
+exports.getPendingLeavesForFaculty = async (req, res) => {
   try {
-    const leaves = await LeaveApplication.find({ status: 'pending', mode: 'faculty+rector' })
-      .populate('studentId', 'name email');
-    res.json(leaves);
+    const leaves = await LeaveApplication.find({ status: 'pendingFaculty' }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json(leaves);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in getPendingLeavesForFaculty:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Update status
-const updateLeaveStatusByFaculty = async (req, res) => {
+// PATCH /api/faculty/approve/:leaveId
+exports.approveLeave = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { status } = req.body;
+    const leave = await LeaveApplication.findById(leaveId);
+    if (!leave) return res.status(404).json({ message: 'Leave not found' });
 
-    const leave = await LeaveApplication.findByIdAndUpdate(
-      leaveId,
-      { status },
-      { new: true }
-    );
+    // Example: set a faculty-approval flag
+    leave.status = 'approvedByFaculty';
+    leave.facultyApprovedBy = req.user._id;
+    await leave.save();
 
-    if (!leave) {
-      return res.status(404).json({ message: 'Leave not found' });
-    }
-
-    res.status(200).json({ message: 'Leave status updated', leave });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(200).json({ message: 'Leave approved by faculty', leave });
+  } catch (error) {
+    console.error('Error in approveLeave (faculty):', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = { 
-  getAllLeavesForFaculty, 
-  getPendingLeavesForFaculty, 
-  updateLeaveStatusByFaculty
+// PATCH /api/faculty/reject/:leaveId
+exports.rejectLeave = async (req, res) => {
+  try {
+    const { leaveId } = req.params;
+    const leave = await LeaveApplication.findById(leaveId);
+    if (!leave) return res.status(404).json({ message: 'Leave not found' });
+
+    leave.status = 'rejectedByFaculty';
+    leave.facultyRejectedBy = req.user._id;
+    await leave.save();
+
+    return res.status(200).json({ message: 'Leave rejected by faculty', leave });
+  } catch (error) {
+    console.error('Error in rejectLeave (faculty):', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
 };

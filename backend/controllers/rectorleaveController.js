@@ -1,54 +1,72 @@
+// controllers/rectorleaveController.js
 const LeaveApplication = require('../models/LeaveApplication');
 
-// Get all leaves for rector
-const getAllLeavesForRector = async (req, res) => {
+// helper to compute combined status
+function recomputeOverallStatus(leave) {
+  if (!leave) return 'pending';
+  if (leave.facultyStatus === 'rejected' || leave.rectorStatus === 'rejected') return 'rejected';
+
+  if (leave.mode === 'rector') {
+    if (leave.rectorStatus === 'approved') return 'approved';
+    return 'pending';
+  }
+
+  // mode faculty+rector
+  if (leave.facultyStatus === 'approved' && leave.rectorStatus === 'approved') return 'approved';
+  if (leave.facultyStatus === 'approved' && (!leave.rectorStatus || leave.rectorStatus === 'pending')) return 'semi-approved';
+  if (leave.rectorStatus === 'approved' && (!leave.facultyStatus || leave.facultyStatus === 'pending')) return 'pending';
+  return 'pending';
+}
+
+exports.getAllLeavesForRector = async (req, res) => {
   try {
-    const leaves = await LeaveApplication.find({   mode: { $in: ['rector', 'faculty+rector'] }
- })
-      .populate('studentId', 'name email'); // Include student info
-    res.json(leaves);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Rector sees both modes; optionally you can filter by college etc.
+    const leaves = await LeaveApplication.find({}).sort({ createdAt: -1 }).lean();
+    return res.json({ leaves });
+  } catch (err) {
+    console.error('getAllLeavesForRector', err);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get pending leaves for rector
-const getPendingLeavesForRector = async (req, res) => {
+exports.getPendingLeavesForRector = async (req, res) => {
   try {
-    const leaves = await LeaveApplication.find({ status: 'pending',   mode: { $in: ['rector', 'faculty+rector'] }
- })
-      .populate('studentId', 'name email');
-    res.json(leaves);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Pending: either rectorStatus pending for mode rector OR for faculty+rector where faculty approved etc.
+    const leaves = await LeaveApplication.find({
+      $or: [
+        { mode: 'rector', rectorStatus: 'pending' },
+        { mode: 'faculty+rector', rectorStatus: 'pending' }
+      ]
+    }).sort({ createdAt: -1 }).lean();
+
+    return res.json({ leaves });
+  } catch (err) {
+    console.error('getPendingLeavesForRector', err);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Update status
-const updateLeaveStatusByRector = async (req, res) => {
+exports.updateLeaveStatusByRector = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const { status } = req.body;
-
-    const leave = await LeaveApplication.findByIdAndUpdate(
-      leaveId,
-      { status },
-      { new: true }
-    );
-
-    if (!leave) {
-      return res.status(404).json({ message: 'Leave not found' });
+    const { status } = req.body; // expects "approved" or "rejected"
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Use 'approved' or 'rejected'." });
     }
 
-    res.status(200).json({ message: 'Leave status updated', leave });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+    const leave = await LeaveApplication.findById(leaveId);
+    if (!leave) return res.status(404).json({ message: 'Leave not found' });
 
-module.exports = { 
-  getAllLeavesForRector, 
-  getPendingLeavesForRector, 
-  updateLeaveStatusByRector 
+    leave.rectorStatus = status;
+    leave.rectorId = req.user && (req.user.id || req.user._id);
+    leave.rectorDecisionAt = new Date();
+
+    leave.status = recomputeOverallStatus(leave);
+    await leave.save();
+
+    return res.json({ message: 'Rector decision recorded', leave });
+  } catch (err) {
+    console.error('updateLeaveStatusByRector', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
 };
