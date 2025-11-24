@@ -1,26 +1,44 @@
+// models/LeaveApplication.js
 const mongoose = require('mongoose');
-
-const { Schema, model, Types } = mongoose;
+const { Schema, model } = mongoose;
 
 const leaveSchema = new Schema(
   {
-    studentId: { type: Types.ObjectId, ref: 'User' },
-    mode: { type: String, enum: ['rector', 'faculty+rector'] },
-    reason: { type: String },
-    fromDate: { type: Date },
-    toDate: { type: Date },
+    studentId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+
+    // Leave mode: either rector alone, or faculty + rector approval required
+    mode: { type: String, enum: ['rector', 'faculty+rector'], required: true },
+
+    reason: { type: String, trim: true },
+    fromDate: { type: Date, required: true },
+    toDate: { type: Date, required: true },
+
+    // Overall status for UI convenience:
+    // 'pending' (nobody approved yet), 'semi-approved' (faculty approved, rector pending),
+    // 'approved' (both approved / rector approved in rector-mode), 'rejected'
     status: {
       type: String,
       enum: ['pending', 'semi-approved', 'approved', 'rejected'],
       default: 'pending'
     },
-    facultyId: { type: Types.ObjectId, ref: 'User' },
-    rectorId: { type: Types.ObjectId, ref: 'User' },
-    pdfPath: { type: String }
+
+    // Faculty approvals
+    facultyStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    facultyId: { type: Schema.Types.ObjectId, ref: 'User' },
+    facultyDecisionAt: { type: Date },
+
+    // Rector approvals
+    rectorStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    rectorId: { type: Schema.Types.ObjectId, ref: 'User' },
+    rectorDecisionAt: { type: Date },
+
+    // Optional: generated pdf / pass path
+    pdfPath: { type: String },
+
+    // Optional: other metadata
+    remarks: { type: String }
   },
   { timestamps: true }
 );
 
-const LeaveApplication = model('LeaveApplication', leaveSchema);
-
-module.exports = LeaveApplication;
+module.exports = model('LeaveApplication', leaveSchema);
